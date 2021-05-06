@@ -1,0 +1,23 @@
+{
+  "name": "lunatic-echo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests",
+    "asbuild:untouched": "asc index.ts --target debug",
+    "asbuild:optimized": "asc index.ts --target release",
+    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@ason/assembly": "0.0.3",
+    "as-lunatic": "0.0.2",
+    "as-telnet": "git+https://github.com/jtenner/as-telnet.git",
+    "assemblyscript": "^0.18.31"
+  },
+  "dependencies": {
+    "@assemblyscript/loader": "^0.18.31"
+  }
+}
