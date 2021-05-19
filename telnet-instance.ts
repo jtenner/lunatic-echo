@@ -8,22 +8,28 @@ import {
 } from "as-telnet";
 import { Channel } from "channel";
 import { Process } from "thread";
+import { SessionRequest, SessionRequestType } from "./session-manager";
 
 export class TelnetInstanceContext {
   constructor(
     public tcpSocket: TCPSocket,
+    public sessionManager: Channel<SessionRequest>,
   ) {}
 }
+
 
 export const enum TelnetInstanceEventType {
   ForceClose,
   IncomingData,
+  AssociateSession,
+  OutboundMessage
 }
 
 export class TelnetInstanceEvent {
   constructor(
     public type: TelnetInstanceEventType,
-    public data: StaticArray<u8> | null,
+    public data: StaticArray<u8> | null = null,
+    public sessionId: u64 = 0,
   ) {}
 }
 
@@ -43,6 +49,14 @@ export function telnetInstance(ctx: TelnetInstanceContext): void {
   let socket = ctx.tcpSocket;
   let message: TelnetInstanceEvent;
   let telnetEventChannel = Channel.create<TelnetInstanceEvent>();
+  let hasSession = false;
+  let sessionId: u64 = 0;
+
+  let sessionCreate = new SessionRequest(
+    SessionRequestType.Create,
+    telnetEventChannel,
+  );
+  ctx.sessionManager.send(sessionCreate);
 
   t = new telnet_t(socket, support, 0);
   t.onData = (t: telnet_t<TCPSocket>, ev: telnet_event_data_t): void => {
@@ -84,6 +98,11 @@ export function telnetInstance(ctx: TelnetInstanceContext): void {
       }
       case TelnetInstanceEventType.IncomingData: {
         t.recv(message.data!);
+        break;
+      }
+      case TelnetInstanceEventType.AssociateSession: {
+        hasSession = true;
+        sessionId = message.sessionId;
         break;
       }
       default: {
